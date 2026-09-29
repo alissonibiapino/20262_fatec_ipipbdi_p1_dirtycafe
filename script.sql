@@ -1,0 +1,12 @@
+DROP SCHEMA IF EXISTS raw CASCADE;
+CREATE SCHEMA IF NOT EXISTS raw;
+
+DROP SCHEMA IF EXISTS staging CASCADE;
+CREATE SCHEMA IF NOT EXISTS staging;
+
+DROP SCHEMA IF EXISTS dw CASCADE;
+CREATE SCHEMA IF NOT EXISTS dw;
+
+SELECT schema_name
+FROM information_schema.schemata
+WHERE schema_name IN ('raw', 'staging','dw');
