@@ -38,6 +38,29 @@ SELECT COUNT(DISTINCT transaction_id) FROM raw.cafe_sales;
 -- 10000 foi o valor retornado novamente pois não há dados duplicados
 
 
+-- Enunciado 4
+-- Corrigir ORDER BY com UNION ALL
+SELECT DISTINCT
+	COUNT(item) AS "Items com erro",
+	COUNT(payment_method) AS "Pagamentos com erro",
+	COUNT(location) AS "Localizações com erro"
+FROM raw.cafe_sales
+WHERE
+item IS NULL OR item = 'UNKNOWN' OR item = 'ERROR'
+OR payment_method IS NULL OR payment_method = 'UNKNOWN' OR payment_method = 'ERROR'
+OR location IS NULL OR location = 'UNKNOWN' OR location = 'ERROR';
+-- ORDER BY COUNT(*);
+
+-- Enunciado 5
+-- SELECT DISTINCT
+-- 	COUNT(item) AS "Items com erro",
+-- 	COUNT(payment_method) AS "Pagamentos com erro",
+-- 	COUNT(location) AS "Localizações com erro"
+-- FROM raw.cafe_sales
+-- WHERE
+-- item IS NULL OR item = 'UNKNOWN' OR item = 'ERROR'
+-- OR payment_method IS NULL OR payment_method = 'UNKNOWN' OR payment_method = 'ERROR'
+-- OR location IS NULL OR location = 'UNKNOWN' OR location = 'ERROR';
 
 
 
@@ -47,6 +70,4 @@ SELECT COUNT(DISTINCT transaction_id) FROM raw.cafe_sales;
 
 
 
-
-
-
+ 
