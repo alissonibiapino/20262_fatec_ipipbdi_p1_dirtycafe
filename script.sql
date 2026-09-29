@@ -52,15 +52,34 @@ OR location IS NULL OR location = 'UNKNOWN' OR location = 'ERROR';
 -- ORDER BY COUNT(*);
 
 -- Enunciado 5
+-- SELECT item FROM raw.cafe_sales WHERE item IS NULL UNION SELECT location FROM raw.cafe_sales WHERE location = 'UNKNOWN';
+
+SELECT 'Item' AS Linhas, COUNT(*) AS itemsNulos
+FROM raw.cafe_sales 
+WHERE item IS NULL
+
+UNION ALL
+
+SELECT 'Métodos de pagamento' AS Linhas, COUNT(*) AS itemsNulos 
+FROM raw.cafe_sales 
+WHERE payment_method IS NULL
+
+UNION ALL
+
+SELECT 'Localizações' AS Linhas, COUNT(*) AS itemsNulos 
+FROM raw.cafe_sales 
+WHERE location IS NULL
+
+
+
+
 -- SELECT DISTINCT
 -- 	COUNT(item) AS "Items com erro",
--- 	COUNT(payment_method) AS "Pagamentos com erro",
--- 	COUNT(location) AS "Localizações com erro"
+-- 	COUNT(payment_method) AS "Pagamentos com erro"
 -- FROM raw.cafe_sales
 -- WHERE
 -- item IS NULL OR item = 'UNKNOWN' OR item = 'ERROR'
--- OR payment_method IS NULL OR payment_method = 'UNKNOWN' OR payment_method = 'ERROR'
--- OR location IS NULL OR location = 'UNKNOWN' OR location = 'ERROR';
+-- OR payment_method IS NULL OR payment_method = 'UNKNOWN' OR payment_method = 'ERROR';
 
 
 
