@@ -54,32 +54,32 @@ OR location IS NULL OR location = 'UNKNOWN' OR location = 'ERROR';
 -- Enunciado 5
 -- SELECT item FROM raw.cafe_sales WHERE item IS NULL UNION SELECT location FROM raw.cafe_sales WHERE location = 'UNKNOWN';
 
-SELECT 'Item' AS Linhas, COUNT(*) AS itemsNulos
-FROM raw.cafe_sales 
-WHERE item IS NULL
+SELECT 'Item' AS Colina,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE item IS NULL) AS itemsNulos,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE item = 'UNKNOWN') AS itemsUnknown,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE item = 'ERROR') AS itemsErro
 
 UNION ALL
 
-SELECT 'Métodos de pagamento' AS Linhas, COUNT(*) AS itemsNulos 
-FROM raw.cafe_sales 
-WHERE payment_method IS NULL
+SELECT 'payment_method' AS Colina,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE payment_method IS NULL) AS payment_methodsNulos,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE payment_method = 'UNKNOWN') AS payment_methodsUnknown,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE payment_method = 'ERROR') AS payment_methodsErro
 
 UNION ALL
 
-SELECT 'Localizações' AS Linhas, COUNT(*) AS itemsNulos 
-FROM raw.cafe_sales 
-WHERE location IS NULL
+SELECT 'location' AS Colina,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE location IS NULL) AS locationsNulos,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE location = 'UNKNOWN') AS locationsUnknown,
+	(SELECT COUNT(*) FROM raw.cafe_sales WHERE location = 'ERROR') AS locationsErro
 
 
 
 
--- SELECT DISTINCT
--- 	COUNT(item) AS "Items com erro",
--- 	COUNT(payment_method) AS "Pagamentos com erro"
--- FROM raw.cafe_sales
--- WHERE
--- item IS NULL OR item = 'UNKNOWN' OR item = 'ERROR'
--- OR payment_method IS NULL OR payment_method = 'UNKNOWN' OR payment_method = 'ERROR';
+
+
+
+
 
 
 
