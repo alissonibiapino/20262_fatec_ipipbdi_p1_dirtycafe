@@ -74,12 +74,95 @@ SELECT 'location' AS Colina,
 	(SELECT COUNT(*) FROM raw.cafe_sales WHERE location = 'ERROR') AS locationsErro
 
 
+-- enunciado 6
+
+DROP TABLE IF EXISTS staging.tipada;
+CREATE TABLE IF NOT EXISTS staging.tipada (
+	transaction_id VARCHAR(20) PRIMARY KEY,
+	item VARCHAR(20),
+	quantity INTEGER,
+	price_per_unit NUMERIC(6,2),
+	total_spent NUMERIC(8,2),
+	payment_method VARCHAR(20),
+	location VARCHAR(20),
+	transaction_date DATE
+);
+
+INSERT INTO staging.tipada (transaction_id)
+SELECT TRIM(transaction_id)
+FROM raw.cafe_sales;
+
+SELECT * FROM staging.tipada;
+
+TRUNCATE TABLE staging.tipada;
+
+SELECT * FROM staging.tipada;
 
 
+INSERT INTO staging.tipada (
+	transaction_id,item, quantity, price_per_unit, total_spent, payment_method, location, transaction_date
+)
+SELECT
+	TRIM(transaction_id),
+
+	CASE
+		WHEN TRIM(item) IN ('ERROR', 'UNKNOWN')
+		THEN NULL ELSE TRIM(item)
+	END,
+
+	CAST (CASE
+		WHEN TRIM(quantity) IN ('ERROR', 'UNKNOWN')
+		THEN NULL ELSE TRIM(quantity)
+	END AS INTEGER),
+
+	CAST (CASE
+		WHEN TRIM(price_per_unit) IN ('ERROR', 'UNKNOWN')
+		THEN NULL ELSE TRIM(price_per_unit)
+	END AS NUMERIC(6,2)),
+
+	CAST (CASE
+		WHEN TRIM(total_spent) IN ('ERROR', 'UNKNOWN')
+		THEN NULL ELSE TRIM(total_spent)
+	END AS NUMERIC(6,2)),
+
+	CASE
+		WHEN TRIM(payment_method) IN ('ERROR', 'UNKNOWN')
+		THEN NULL ELSE TRIM(payment_method)
+	END,
+
+	CASE
+		WHEN TRIM(location) IN ('ERROR', 'UNKNOWN')
+		THEN NULL ELSE TRIM(location)
+	END,
+
+	TO_DATE (CASE
+		WHEN TRIM(transaction_date) IN ('ERROR', 'UNKNOWN')
+		THEN NULL ELSE TRIM(transaction_date)
+	END, 'YYYY-MM-DD')
+
+FROM raw.cafe_sales;
+
+SELECT * FROM staging.tipada;
+
+SELECT 
+    COUNT(*) - COUNT(item) AS itemsNulos,
+    COUNT(*) - COUNT(quantity) AS quantityNulos,
+    COUNT(*) - COUNT(price_per_unit) AS price_per_unitNulos,
+    COUNT(*) - COUNT(total_spent) AS total_spentNulos,
+    COUNT(*) - COUNT(payment_method) AS payment_methodNulos,
+    COUNT(*) - COUNT(location) AS locationNulos,
+    COUNT(*) - COUNT(transaction_date) AS transaction_dateNulos
+FROM staging.tipada;
 
 
-
-
+-- WHERE
+-- 	item IS NULL OR
+-- 	quantity IS NULL OR
+-- 	price_per_unit IS NULL OR
+-- 	total_spent IS NULL OR
+-- 	payment_method IS NULL OR
+-- 	location IS NULL OR
+-- 	transaction_date IS NULL
 
 
 
