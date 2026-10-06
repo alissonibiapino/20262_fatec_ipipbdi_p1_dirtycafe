@@ -555,3 +555,55 @@ JOIN dw.dim_date dd ON dd.date_sk = f.date_sk
 GROUP BY dd.day_of_week, dd.is_weekend
 ORDER BY receita DESC;
 
+
+-- enunciado 17
+SELECT
+    di.item,
+    SUM(f.total_spent) AS receita
+FROM dw.fact_sales f
+JOIN dw.dim_item di ON di.item_sk = f.item_sk
+JOIN dw.dim_date dd ON dd.date_sk = f.date_sk
+WHERE dd.quarter = 4
+GROUP BY di.item
+ORDER BY receita DESC;
+
+-- parte do elvis
+-- enunciado 18
+
+SELECT
+    di.item,
+    dp.payment,
+    SUM(f.total_spent) AS receita
+FROM dw.fact_sales f
+JOIN dw.dim_item di ON di.item_sk = f.item_sk
+JOIN dw.dim_payment dp ON dp.payment_sk = f.payment_sk
+JOIN dw.dim_date dd ON dd.date_sk = f.date_sk
+WHERE di.category = 'Bebida'
+  AND dp.payment IN ('Cash', 'Digital Wallet')
+  AND dd.month BETWEEN 1 AND 6
+GROUP BY di.item, dp.payment
+ORDER BY di.item, dp.payment;
+
+
+-- enunciado 19
+SELECT
+    COALESCE(di.category, 'TODAS') AS categoria,
+    COALESCE(di.item, 'TODOS') AS item,
+    SUM(f.total_spent) AS receita
+FROM dw.fact_sales f
+JOIN dw.dim_item di ON di.item_sk = f.item_sk
+GROUP BY ROLLUP (di.category, di.item)
+ORDER BY di.category NULLS LAST, di.item NULLS LAST;
+
+
+-- enunciado 20
+SELECT
+    COALESCE(dl.location, 'TODOS') AS localizacao,
+    COALESCE(dp.payment, 'TODOS') AS forma_pagamento,
+    SUM(f.total_spent) AS receita
+FROM dw.fact_sales f
+JOIN dw.dim_location dl ON dl.location_sk = f.location_sk
+JOIN dw.dim_payment dp ON dp.payment_sk = f.payment_sk
+GROUP BY CUBE (dl.location, dp.payment)
+ORDER BY dl.location NULLS LAST, dp.payment NULLS LAST;
+
