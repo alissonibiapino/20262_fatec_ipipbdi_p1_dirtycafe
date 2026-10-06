@@ -290,3 +290,160 @@ SELECT
 -- linhas descartadas 936
 
  
+-- enunciado 10
+SELECT MIN(transaction_date) AS menor_data, MAX(transaction_date) AS maior_data 
+FROM staging.cafe_sales;
+
+DROP TABLE IF EXISTS dw.dim_date CASCADE;
+CREATE TABLE dw.dim_date (
+    date_sk INTEGER PRIMARY KEY,
+    full_date DATE NOT NULL,
+    day INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    month_name VARCHAR(20) NOT NULL,
+    quarter INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    day_of_week VARCHAR(20) NOT NULL,
+    is_weekend BOOLEAN NOT NULL
+);
+
+INSERT INTO dw.dim_date (
+    date_sk,
+    full_date,
+    day,
+    month,
+    month_name,
+    quarter,
+    year,
+    day_of_week,
+    is_weekend
+)
+SELECT
+    TO_CHAR(d, 'YYYYMMDD')::INTEGER AS date_sk,
+    d::DATE AS full_date,
+    EXTRACT(DAY FROM d)::INTEGER AS day,
+    EXTRACT(MONTH FROM d)::INTEGER AS month,
+    TO_CHAR(d, 'TMMonth') AS month_name,
+    EXTRACT(QUARTER FROM d)::INTEGER AS quarter,
+    EXTRACT(YEAR FROM d)::INTEGER AS year,
+    TO_CHAR(d, 'TMDay') AS day_of_week,
+    CASE WHEN EXTRACT(ISODOW FROM d) IN (6, 7) THEN TRUE ELSE FALSE END AS is_weekend
+FROM generate_series(
+    (SELECT DATE_TRUNC('year', MIN(transaction_date)) FROM staging.cafe_sales),
+    (SELECT (DATE_TRUNC('year', MAX(transaction_date)) + INTERVAL '1 year - 1 day')::DATE FROM staging.cafe_sales),
+    INTERVAL '1 day'
+) AS d;
+
+SELECT * FROM dw.dim_date;
+SELECT COUNT(*) AS total_dias_dim_date FROM dw.dim_date;
+
+-- enunciado 11
+
+DROP TABLE IF EXISTS dw.dim_item CASCADE;
+CREATE TABLE dw.dim_item (
+    item_sk SERIAL PRIMARY KEY,
+    item VARCHAR(20) UNIQUE NOT NULL,
+    category VARCHAR(10) NOT NULL
+);
+
+DROP TABLE IF EXISTS dw.dim_payment CASCADE;
+CREATE TABLE dw.dim_payment (
+    payment_sk SERIAL PRIMARY KEY,
+    payment VARCHAR(20) UNIQUE NOT NULL
+);
+
+DROP TABLE IF EXISTS dw.dim_location CASCADE;
+CREATE TABLE dw.dim_location (
+    location_sk SERIAL PRIMARY KEY,
+    location VARCHAR(20) UNIQUE NOT NULL
+);
+
+-- cargas nas dimensoes
+-- dim_item
+INSERT INTO dw.dim_item (item, category)
+	SELECT DISTINCT s.item, c.category
+	FROM staging.cafe_sales s
+	JOIN staging.cardapio c ON c.item = s.item
+ORDER BY s.item;
+
+-- Carga dim_payment
+INSERT INTO dw.dim_payment (payment)
+	SELECT DISTINCT payment_method
+	FROM staging.cafe_sales
+ORDER BY payment_method;
+
+-- Carga dim_location
+INSERT INTO dw.dim_location (location)
+	SELECT DISTINCT location
+	FROM staging.cafe_sales
+ORDER BY location;
+
+-- Consulta de conferência das 3 dimensões (UNION ALL)
+SELECT 'dim_item' AS dimensao, COUNT(*) AS quantidade FROM dw.dim_item
+UNION ALL
+SELECT 'dim_payment' AS dimensao, COUNT(*) AS quantidade FROM dw.dim_payment
+UNION ALL
+SELECT 'dim_location' AS dimensao, COUNT(*) AS quantidade FROM dw.dim_location;
+
+
+
+
+
+-- enunciado 12 (quase final da fase 6)
+DROP TABLE IF EXISTS dw.fact_sales CASCADE;
+
+CREATE TABLE dw.fact_sales (
+    transaction_nk VARCHAR(20) PRIMARY KEY,
+    date_sk INTEGER NOT NULL REFERENCES dw.dim_date(date_sk),
+    item_sk INTEGER NOT NULL REFERENCES dw.dim_item(item_sk),
+    payment_sk INTEGER NOT NULL REFERENCES dw.dim_payment(payment_sk),
+    location_sk INTEGER NOT NULL REFERENCES dw.dim_location(location_sk),
+    quantity INTEGER NOT NULL,
+    price_per_unit NUMERIC(6,2) NOT NULL,
+    total_spent NUMERIC(8,2) NOT NULL
+);
+
+-- o index acelera na hora de fazer as consultas
+CREATE INDEX idx_fact_date ON dw.fact_sales(date_sk);
+CREATE INDEX idx_fact_item ON dw.fact_sales(item_sk);
+CREATE INDEX idx_fact_payment ON dw.fact_sales(payment_sk);
+CREATE INDEX idx_fact_location ON dw.fact_sales(location_sk);
+
+TRUNCATE TABLE dw.fact_sales;
+
+INSERT INTO dw.fact_sales (
+    transaction_nk,
+    date_sk,
+    item_sk,
+    payment_sk,
+    location_sk,
+    quantity,
+    price_per_unit,
+    total_spent
+)
+SELECT
+    s.transaction_id AS transaction_nk,
+    TO_CHAR(s.transaction_date, 'YYYYMMDD')::INTEGER AS date_sk,
+    di.item_sk,
+    dp.payment_sk,
+    dl.location_sk,
+    s.quantity,
+    s.price_per_unit,
+    s.total_spent
+FROM staging.cafe_sales s
+JOIN dw.dim_item di ON di.item = s.item
+JOIN dw.dim_payment dp ON dp.payment = s.payment_method
+JOIN dw.dim_location dl ON dl.location = s.location;
+
+-- conferindo se esta tudo certinho
+SELECT
+    'staging.cafe_sales' AS origem,
+    COUNT(*) AS total_linhas,
+    SUM(total_spent) AS soma_total_spent
+FROM staging.cafe_sales
+UNION ALL
+SELECT
+    'dw.fact_sales' AS origem,
+    COUNT(*) AS total_linhas,
+    SUM(total_spent) AS soma_total_spent
+FROM dw.fact_sales;
