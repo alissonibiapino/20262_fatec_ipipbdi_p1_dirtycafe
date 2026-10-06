@@ -516,3 +516,42 @@ BEGIN
 	RAISE NOTICE 'Total geral de linhas lidas nas três dimensões: %', v_linhas_totais;
 
 END $$;
+
+
+-- 14 - de meses cronologia
+
+SELECT
+    dd.year,
+    dd.month,
+    dd.month_name,
+    COUNT(*) AS qtd_vendas,
+    SUM(f.total_spent) AS receita,
+    ROUND(AVG(f.total_spent), 2) AS ticket_medio
+FROM dw.fact_sales f
+JOIN dw.dim_date dd ON dd.date_sk = f.date_sk
+GROUP BY dd.year, dd.month, dd.month_name
+ORDER BY dd.year, dd.month;
+
+-- 15 - ranking de items
+SELECT
+    di.category,
+    di.item,
+    SUM(f.quantity) AS total_unidades_vendidas,
+    SUM(f.total_spent) AS receita
+FROM dw.fact_sales f
+JOIN dw.dim_item di ON di.item_sk = f.item_sk
+GROUP BY di.category, di.item
+ORDER BY receita DESC;
+
+-- 16 - vendas por dia da semana
+
+SELECT
+    dd.day_of_week,
+    dd.is_weekend,
+    COUNT(*) AS qtd_vendas,
+    SUM(f.total_spent) AS receita
+FROM dw.fact_sales f
+JOIN dw.dim_date dd ON dd.date_sk = f.date_sk
+GROUP BY dd.day_of_week, dd.is_weekend
+ORDER BY receita DESC;
+
