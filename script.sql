@@ -76,8 +76,8 @@ SELECT 'location' AS Colina,
 
 -- enunciado 6
 
-DROP TABLE IF EXISTS staging.tipada;
-CREATE TABLE IF NOT EXISTS staging.tipada (
+DROP TABLE IF EXISTS staging.cafe_tipada;
+CREATE TABLE IF NOT EXISTS staging.cafe_tipada (
 	transaction_id VARCHAR(20) PRIMARY KEY,
 	item VARCHAR(20),
 	quantity INTEGER,
@@ -88,18 +88,18 @@ CREATE TABLE IF NOT EXISTS staging.tipada (
 	transaction_date DATE
 );
 
-INSERT INTO staging.tipada (transaction_id)
+INSERT INTO staging.cafe_tipada (transaction_id)
 SELECT TRIM(transaction_id)
 FROM raw.cafe_sales;
 
-SELECT * FROM staging.tipada;
+SELECT * FROM staging.cafe_tipada;
 
-TRUNCATE TABLE staging.tipada;
+TRUNCATE TABLE staging.cafe_tipada;
 
-SELECT * FROM staging.tipada;
+SELECT * FROM staging.cafe_tipada;
 
 
-INSERT INTO staging.tipada (
+INSERT INTO staging.cafe_tipada (
 	transaction_id,item, quantity, price_per_unit, total_spent, payment_method, location, transaction_date
 )
 SELECT
@@ -142,7 +142,7 @@ SELECT
 
 FROM raw.cafe_sales;
 
-SELECT * FROM staging.tipada;
+SELECT * FROM staging.cafe_tipada;
 
 SELECT 
     COUNT(*) - COUNT(item) AS itemsNulos,
@@ -152,24 +152,5 @@ SELECT
     COUNT(*) - COUNT(payment_method) AS payment_methodNulos,
     COUNT(*) - COUNT(location) AS locationNulos,
     COUNT(*) - COUNT(transaction_date) AS transaction_dateNulos
-FROM staging.tipada;
+FROM staging.cafe_tipada;
 
-
--- WHERE
--- 	item IS NULL OR
--- 	quantity IS NULL OR
--- 	price_per_unit IS NULL OR
--- 	total_spent IS NULL OR
--- 	payment_method IS NULL OR
--- 	location IS NULL OR
--- 	transaction_date IS NULL
-
-
-
-
-
-
-
-
-
- 
