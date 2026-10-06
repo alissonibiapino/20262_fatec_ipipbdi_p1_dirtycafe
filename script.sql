@@ -154,3 +154,83 @@ SELECT
     COUNT(*) - COUNT(transaction_date) AS transaction_dateNulos
 FROM staging.cafe_tipada;
 
+
+-- 7
+
+DROP TABLE IF EXISTS staging.cardapio CASCADE;
+
+CREATE TABLE staging.cardapio (
+    item VARCHAR(20) PRIMARY KEY,
+    price NUMERIC(6,2) NOT NULL,
+    category VARCHAR(10) NOT NULL
+);
+
+INSERT INTO staging.cardapio (item, price, category) VALUES
+('Cookie', 1.00, 'Comida'),
+('Tea', 1.50, 'Bebida'),
+('Coffee', 2.00, 'Bebida'),
+('Cake', 3.00, 'Comida'),
+('Juice', 3.00, 'Bebida'),
+('Sandwich', 4.00, 'Comida'),
+('Smoothie', 4.00, 'Bebida'),
+('Salad', 5.00, 'Comida');
+
+SELECT * FROM staging.cardapio;
+
+
+-- enunciado 8
+
+-- R1 preço nulo e item conhecido preço ← preço do item no cardápio
+UPDATE staging.cafe_tipada t
+SET price_per_unit = (SELECT c.price FROM staging.cardapio c WHERE c.item = t.item)
+WHERE t.price_per_unit IS NULL AND t.item IS NOT NULL;
+-- WHERE t.price_per_unit IS NOT NULL AND t.item IS NULL
+
+-- R2 preço nulo, quantidade e total conhecidos preço ← total ÷ quantidade
+UPDATE staging.cafe_tipada
+SET price_per_unit = total_spent / quantity
+WHERE price_per_unit IS NULL AND quantity IS NOT NULL AND total_spent IS NOT NULL;
+
+
+-- R3 quantidade nula, preço e total conhecidos quantidade ← total ÷ preço, arredondado para inteiro
+-- TOTAL ÷ PREÇO
+-- total_spent / price_per_unit
+
+UPDATE staging.cafe_tipada
+SET quantity = ROUND(total_spent / price_per_unit)::INTEGER
+WHERE quantity IS NULL AND price_per_unit IS NOT NULL AND total_spent IS NOT NULL;
+
+
+
+-- R4 total nulo, quantidade e preço conhecidos total ← quantidade × preço
+-- TOTAL = QUANTIDADE X PREÇO DA UNIDADE
+-- igual fizemos no pi
+-- total_spent = quantity * price_per_unit
+UPDATE staging.cafe_tipada
+SET total_spent = quantity * price_per_unit
+WHERE total_spent IS NULL AND quantity IS NOT NULL AND price_per_unit IS NOT NULL;
+
+
+-- R5 item nulo e preço conhecido, pertencente a um único item do cardápio item ← item do cardápio com aquele preço
+UPDATE staging.cafe_tipada t
+SET item = (SELECT c.item FROM staging.cardapio c WHERE c.price = t.price_per_unit)
+WHERE t.item IS NULL 
+  AND t.price_per_unit IS NOT NULL 
+   AND t.price_per_unit IN (
+      SELECT price 
+		FROM staging.cardapio 
+		GROUP BY price 
+      HAVING COUNT(*) = 1
+);
+
+
+-- R6 forma de pagamento ou local nulos substituir por 'Unknow
+UPDATE staging.cafe_tipada
+	SET payment_method = 'Unknown'
+WHERE payment_method IS NULL;
+
+UPDATE staging.cafe_tipada
+	SET location = 'Unknown'
+WHERE location IS NULL;
+
+
