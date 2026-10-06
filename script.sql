@@ -447,3 +447,72 @@ SELECT
     COUNT(*) AS total_linhas,
     SUM(total_spent) AS soma_total_spent
 FROM dw.fact_sales;
+
+
+-- enunciado 13
+-- a x
+-- b x
+-- c x
+-- d x
+-- e x
+DO $$
+DECLARE
+
+	cur_ranking REFCURSOR;
+
+	-- dimensoes
+	v_dimensoes TEXT[] := ARRAY['item', 'payment', 'location'];
+	v_dim_atual TEXT;
+
+	-- texto sql
+	v_sql TEXT;
+
+	-- receita
+	v_receita_total_fato NUMERIC(12,2);
+	v_valor TEXT;
+	v_vendas INTEGER;
+	v_receita NUMERIC(12,2);
+	v_percentual NUMERIC(5,2);
+
+	-- contadores
+	v_posicao INTEGER;
+	v_linhas_dimensao INTEGER;
+	v_linhas_totais INTEGER := 0;
+
+BEGIN
+	SELECT SUM(total_spent) INTO v_receita_total_fato FROM dw.fact_sales;
+
+	FOREACH v_dim_atual IN ARRAY v_dimensoes LOOP
+		v_posicao := 0;
+		v_linhas_dimensao := 0;
+
+		v_sql := '
+			SELECT d.' || v_dim_atual || ',
+				COUNT(*) AS vendas,
+				SUM(f.total_spent) AS receita ' ||
+			'FROM dw.fact_sales f ' ||
+			'JOIN dw.dim_' || v_dim_atual || ' d ON d.' || v_dim_atual || '_sk = f.' || v_dim_atual || '_sk ' ||
+			'GROUP BY d.' || v_dim_atual || ' ' || 
+			'ORDER BY receita DESC';
+
+		OPEN cur_ranking FOR EXECUTE v_sql;
+
+			LOOP
+				FETCH cur_ranking INTO v_valor, v_vendas, v_receita;
+				EXIT WHEN NOT FOUND;
+
+				v_posicao := v_posicao + 1;
+				v_linhas_dimensao := v_linhas_dimensao + 1;
+				v_percentual := ROUND((v_receita / v_receita_total_fato) * 100, 2);
+				RAISE NOTICE '% | % - %: % vendas, receita % (% %% do total)', v_dim_atual, v_posicao, v_valor, v_vendas, v_receita, v_percentual;
+			END LOOP;
+
+		CLOSE cur_ranking;
+
+		RAISE NOTICE 'Total de linhas lidas na dimensão %: %', v_dim_atual, v_linhas_dimensao;
+		v_linhas_totais := v_linhas_totais + v_linhas_dimensao;
+
+	END LOOP;
+	RAISE NOTICE 'Total geral de linhas lidas nas três dimensões: %', v_linhas_totais;
+
+END $$;
