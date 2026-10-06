@@ -234,3 +234,59 @@ UPDATE staging.cafe_tipada
 WHERE location IS NULL;
 
 
+-- enunciado 09
+-- agora é outro staging = staging.cafe_sales É DIFERNTE DE staging.cafe_tipada !!
+DROP TABLE IF EXISTS staging.cafe_sales CASCADE;
+
+CREATE TABLE staging.cafe_sales (
+    transaction_id VARCHAR(20) PRIMARY KEY,
+    item VARCHAR(20) NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price_per_unit NUMERIC(6,2) NOT NULL CHECK (price_per_unit > 0),
+    total_spent NUMERIC(8,2) NOT NULL,
+    payment_method VARCHAR(20) NOT NULL,
+    location VARCHAR(20) NOT NULL,
+    transaction_date DATE NOT NULL
+);
+
+TRUNCATE TABLE staging.cafe_sales;
+
+INSERT INTO staging.cafe_sales (
+    transaction_id,
+    item,
+    quantity,
+    price_per_unit,
+    total_spent,
+    payment_method,
+    location,
+    transaction_date
+)
+SELECT
+    transaction_id,
+    item,
+    quantity,
+    price_per_unit,
+    total_spent,
+    payment_method,
+    location,
+    transaction_date
+FROM staging.cafe_tipada
+WHERE item IS NOT NULL
+  AND quantity IS NOT NULL
+  AND price_per_unit IS NOT NULL
+  AND total_spent IS NOT NULL
+  AND payment_method IS NOT NULL
+  AND location IS NOT NULL
+  AND transaction_date IS NOT NULL;
+
+-- Consulta de contagem e perda de linhas
+SELECT
+    (SELECT COUNT(*) FROM staging.cafe_tipada) AS linhas_tipada,
+    (SELECT COUNT(*) FROM staging.cafe_sales) AS linhas_limpas,
+    (SELECT COUNT(*) FROM staging.cafe_tipada) - (SELECT COUNT(*) FROM staging.cafe_sales) AS descartadas;
+
+-- linhas_tipada 1000
+--  linhas_limpas  9064
+-- linhas descartadas 936
+
+ 
